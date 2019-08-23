@@ -1,2 +1,4 @@
-# java-exsort
-Application for the big files sorting 
+# ExSorter
+
+Simple implementation of External Sorter. 
+Created without any dependencies except JUnit.
