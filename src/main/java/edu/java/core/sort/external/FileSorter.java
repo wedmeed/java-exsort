@@ -3,7 +3,7 @@ package edu.java.core.sort.external;
 import edu.java.core.sort.external.processor.ExternalSortProcessor;
 import edu.java.core.sort.external.processor.impl.LinedFileSource;
 import edu.java.core.sort.external.processor.impl.LinedFileStore;
-import edu.java.core.sort.external.processor.impl.LinedMultiFileMediator;
+import edu.java.core.sort.external.processor.impl.LinedFilesMediator;
 import edu.java.core.sort.external.utils.Sleeper;
 
 import java.time.Duration;
@@ -84,7 +84,7 @@ public class FileSorter {
         // 3. run the file sorter
         ExternalSortProcessor.run(
                 new LinedFileSource(source),
-                new LinedMultiFileMediator(tmpPattern,String.CASE_INSENSITIVE_ORDER),
+                new LinedFilesMediator(tmpPattern),
                 new LinedFileStore(destination),
                 String.CASE_INSENSITIVE_ORDER,
                 chunkSize);

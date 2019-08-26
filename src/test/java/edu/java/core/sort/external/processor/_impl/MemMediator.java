@@ -1,46 +1,36 @@
 package edu.java.core.sort.external.processor._impl;
 
-import edu.java.core.sort.external.processor.DataMediator;
-import edu.java.core.sort.external.processor.DataSource;
+import edu.java.core.sort.external.processor.MultiMediator;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
-public class MemMediator<T> implements DataMediator<T> {
-    public List<T> data = new ArrayList<>();
-    public boolean cleared;
+public class MemMediator<T> implements MultiMediator<T> {
+    public List<List<T>> data = new ArrayList<>();
     public boolean closed;
-    public Comparator<T> comparator;
-
-    public MemMediator(Comparator<T> comparator) {
-        this.comparator = comparator;
-    }
 
     @Override
-    public void clear() {
-        cleared = true;
-    }
-
-    @Override
-    public DataSource<T> open() throws Exception {
+    public MultiMediator<T> open() {
         return this;
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         closed = true;
     }
 
     @Override
-    public Iterator<T> iterator() {
-        data.sort(comparator);
-        return data.iterator();
+    public Collection<Iterator<T>> extract() {
+        ArrayList<Iterator<T>> result = new ArrayList<>();
+        for (List<T> datum : data) {
+            result.add(datum.iterator());
+        }
+        return result;
     }
 
     @Override
-    public void accept(Iterable<T> ts) {
-        ts.forEach((o)->data.add(o));
+    public void save(Iterator<T> data, Integer number) {
+        ArrayList<T> store = new ArrayList<>();
+        data.forEachRemaining(store::add);
+        this.data.add(store);
     }
 }

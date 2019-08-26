@@ -43,13 +43,17 @@ public class FileSorterTest {
 
     @Test
     public void canAcceptSourceAndDestination() {
-        FileGenerator.run("test_source.txt", 10, System.lineSeparator());
-        FileSorter.main(new String[]{"--source=test_source.txt", "--destination=test_dest.txt"});
-        LinedFileSortingChecker.run("test_dest.txt", String::compareToIgnoreCase);
-        LinedFileSizeChecker.run("test_dest.txt",10);
-        //assertEquals("", errContent.toString());
-        new File("test_source.txt").delete();
-        new File("test_dest.txt").delete();
+        try {
+            FileGenerator.run("test_source.txt", 10, System.lineSeparator());
+            FileSorter.main(new String[]{"--source=test_source.txt", "--destination=test_dest.txt"});
+            LinedFileSortingChecker.run("test_dest.txt", String::compareToIgnoreCase);
+            LinedFileSizeChecker.run("test_dest.txt", 10);
+            //assertEquals("", errContent.toString());
+        }
+        finally {
+            assertTrue(new File("test_source.txt").delete());
+            assertTrue(new File("test_dest.txt").delete());
+        }
     }
 
     @Test
@@ -57,10 +61,8 @@ public class FileSorterTest {
         FileGenerator.run("source.txt", 10, System.lineSeparator());
         FileSorter.main(new String[]{});
         LinedFileSortingChecker.run("sorted.txt", String::compareToIgnoreCase);
-        LinedFileSizeChecker.run("test_dest.txt",10);
+        LinedFileSizeChecker.run("sorted.txt",10);
         //assertEquals("", errContent.toString());
-        new File("test_source.txt").delete();
-        new File("test_dest.txt").delete();
     }
 
     @Test

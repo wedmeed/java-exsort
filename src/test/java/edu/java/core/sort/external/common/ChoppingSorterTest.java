@@ -1,10 +1,10 @@
-package edu.java.core.sort.external.common.utils;
+package edu.java.core.sort.external.common;
 
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class ChunkedSorterTest {
+public class ChoppingSorterTest {
 
     @Test
     public void run() {

@@ -1,9 +1,10 @@
-package edu.java.core.sort.external.common.utils;
+package edu.java.core.sort.external.common;
 
+
+import edu.java.core.sort.external.utils.StackTraceExtractor;
 
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -12,7 +13,7 @@ import java.util.logging.Logger;
 /**
  * Form any amount of incoming data to chunks of sorted data
  */
-public class ChunkedSorter {
+public class ChoppingSorter {
 
     private static Logger log = LogManager.getLogManager().getLogger(Logger.GLOBAL_LOGGER_NAME);
 
@@ -25,7 +26,7 @@ public class ChunkedSorter {
      * @param dose size of chunk
      * @return amount of produced chunks
      */
-    public static <T> int run(Iterator<T> source, Comparator<T> cmp, Consumer<Iterable<T>> saver, int dose) {
+    public static <T> int run(Extractor<T> source, Comparator<T> cmp, MultiSaver<T> saver, int dose) {
         int parallelismLevel = Runtime.getRuntime().availableProcessors();
         ThreadPoolExecutor executor = new ThreadPoolExecutor(
                 parallelismLevel,
@@ -39,29 +40,38 @@ public class ChunkedSorter {
 
         log.log(Level.INFO, "Start processing with {0} parallelismLevel", parallelismLevel);
 
-        while(source.hasNext()) {
+        try {
+            Iterator<T> data = source.extract();
+            while(data.hasNext()) {
 
-            // 0. wait if there are too many works
-            if (chunksAmount >= parallelismLevel){
-                try {
+                // 0. wait if there are too many works
+                if (chunksAmount >= parallelismLevel){
                     executionService.take();
-                } catch (InterruptedException ignored) {}
+                }
+
+                // 1. read to buffer
+                List<T> buffer = readBuffer(data, dose);
+
+                // 2. sort buffer
+                Integer chunk = chunksAmount++;
+                executionService.submit(()->{
+                    buffer.sort(cmp);
+                    // 3. write to output
+                    try {
+                        saver.save(buffer.iterator(), chunk);
+                    } catch (Exception e) {
+                        log.severe(StackTraceExtractor.process(e));
+                    }
+                }, "");
+
+
+                // 4. report state
+                log.log(Level.INFO, "Chunk with {0} unique items has been sent to sorting.", buffer.size());
             }
-
-            // 1. read to buffer
-            List<T> buffer = readBuffer(source, dose);
-
-            // 2. sort buffer
-            executionService.submit(()->{
-                buffer.sort(cmp);
-                // 3. write to output
-                saver.accept(buffer);
-            }, "");
-            chunksAmount++;
-
-            // 4. report state
-            log.log(Level.INFO, "Chunk with {0} unique items has been sent to sorting.", buffer.size());
+        } catch (Exception e) {
+            log.severe(StackTraceExtractor.process(e));
         }
+
         executor.shutdown();
         try {
             executor.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS);

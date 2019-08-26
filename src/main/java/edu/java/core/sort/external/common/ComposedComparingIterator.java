@@ -3,10 +3,9 @@ package edu.java.core.sort.external.common;
 import java.util.*;
 
 /**
- * the object which allow to iterate through many other iterators
- * the custom alternative for {@link org.apache.commons.collections4.IteratorUtils::collatedIterator}
+ * the object which allow to iterate through many other iterators in the determined order
  */
-public class ComposedIterator <T> implements Iterator<T> {
+public class ComposedComparingIterator<T> implements Iterator<T> {
 
     /**
      * The mechanism for selection of next element. Backed by {@link Bucket}.
@@ -21,7 +20,7 @@ public class ComposedIterator <T> implements Iterator<T> {
      * @param comparator define order of extraction from source iterators
      * @param iterators source iterators
      */
-    public ComposedIterator(Comparator<T> comparator, Collection<Iterator<T>> iterators) {
+    public ComposedComparingIterator(Comparator<T> comparator, Collection<Iterator<T>> iterators) {
         this.bucketQueue = new PriorityQueue<>(iterators.size(),(o1, o2)-> comparator.compare(o1.value,o2.value));
         for (Iterator<T> itr: iterators) {
             if (itr.hasNext()) {

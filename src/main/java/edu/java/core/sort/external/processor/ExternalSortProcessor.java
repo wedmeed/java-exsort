@@ -1,6 +1,7 @@
 package edu.java.core.sort.external.processor;
 
-import edu.java.core.sort.external.common.utils.ChunkedSorter;
+import edu.java.core.sort.external.common.ComposedComparingIterator;
+import edu.java.core.sort.external.common.ChoppingSorter;
 
 import java.util.Comparator;
 import java.util.logging.Level;
@@ -11,30 +12,33 @@ public class ExternalSortProcessor {
 
     private static Logger log = LogManager.getLogManager().getLogger(Logger.GLOBAL_LOGGER_NAME);
 
-    public static <T> void run(DataSource<T> source, DataMediator<T> mediator,
-                               DataStore<T> destination,
+    public static <T> void run(Source<T> source, MultiMediator<T> mediator,
+                               Store<T> destination,
                                Comparator<T> comparator,
                                int dose){
+        // 0. Open mediator
+        try(MultiMediator<T> temp = mediator.open()) {
 
-        // 1. sort source to temporary chunks
-        try(DataSource<T> src = source.open()){
-            ChunkedSorter.run(src.iterator(), comparator, mediator, dose);
+            // 1. sort source to temporary chunks
+            try (Source<T> src = source.open()) {
+                ChoppingSorter.run(src, comparator, temp, dose);
+            } catch (Exception e) {
+                log.log(Level.SEVERE, "Error during source processing: {0}", e.getStackTrace());
+            }
+
+            // TODO: 2019-07-16
+            //   2alt. if there is only one chunk - some mediators should support finalization
+
+            // 2. merge temporary chunks to destination through comparing iterator
+            try (Store<T> dest = destination.open()) {
+                dest.save(new ComposedComparingIterator<>(comparator, temp.extract()));
+            } catch (Exception e) {
+                log.log(Level.SEVERE, "Error during result persistence: {0}", e.getStackTrace());
+            }
+
         } catch (Exception e) {
-            log.log(Level.SEVERE, "Error during source processing: {0}", e.getStackTrace());
+            log.log(Level.SEVERE, "Error during working with temporary storage: {0}", e.getStackTrace());
         }
-
-        // TODO: 2019-07-16
-        //   2alt. if there is only one chunk - some mediators should support finalization
-
-        // 2. merge temporary chunks to destination
-        try(DataSource<T> src = mediator.open()){
-            destination.accept(src);
-        } catch (Exception e) {
-            log.log(Level.SEVERE, "Error during result preparation: {0}", e.getStackTrace());
-        }
-
-        // 3. clear temporary resources
-        mediator.clear();
 
     }
 }

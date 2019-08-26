@@ -1,15 +1,16 @@
 package edu.java.core.sort.external.processor._impl;
 
-import edu.java.core.sort.external.processor.DataSource;
+import edu.java.core.sort.external.processor.Source;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class MemSource<T> implements DataSource<T> {
+public class MemSource<T> implements Source<T> {
 
     public List<T> data;
+    public boolean closed;
 
     public MemSource(Supplier<T> producer, int size) {
         data = new ArrayList<>(size);
@@ -19,15 +20,17 @@ public class MemSource<T> implements DataSource<T> {
     }
 
     @Override
-    public DataSource<T> open(){
+    public Source<T> open(){
         return this;
     }
 
     @Override
-    public void close(){}
+    public void close(){
+        closed = true;
+    }
 
     @Override
-    public Iterator<T> iterator() {
+    public Iterator<T> extract() {
         return data.iterator();
     }
 }
